@@ -7,6 +7,7 @@ import joblib
 import tifffile as tiff
 import io
 from datetime import datetime
+import os
 
 from utils import preprocess_tabular_data, load_image_as_array  # Pastikan ini tersedia
 
@@ -106,6 +107,9 @@ def predict():
         }
     })
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Dapatkan PORT dari variabel lingkungan, default ke 5000 jika tidak ada
+    port = int(os.environ.get("PORT", 5000))
+    # Jalankan aplikasi dengan host '0.0.0.0' agar dapat diakses dari luar
+    # dan debug=False untuk lingkungan produksi
+    app.run(debug=False, host="0.0.0.0", port=port) # <-- Perubahan di sini
