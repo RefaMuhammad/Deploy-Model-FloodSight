@@ -13,7 +13,7 @@ from utils import preprocess_tabular_data, load_image_as_array  # Pastikan ini t
 app = Flask(__name__)
 
 # Load model dan preprocessor saat startup
-model = tf.keras.models.load_model("saved_model_new/")
+model = tf.keras.models.load_model("saved_model/")
 preprocessor = joblib.load("preprocessor.pkl")
 
 
