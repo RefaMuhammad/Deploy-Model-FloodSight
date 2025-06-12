@@ -9,13 +9,15 @@ import io
 from datetime import datetime
 import os
 
-
 from utils import preprocess_tabular_data, load_image_as_array  # Pastikan ini tersedia
 
 app = Flask(__name__)
 
-# Load model dan preprocessor saat startup
-model = tf.keras.models.load_model("saved_model/")
+# Load model dengan signature
+loaded = tf.saved_model.load("saved_model/")
+infer = loaded.signatures["serving_default"]
+
+# Load preprocessor
 preprocessor = joblib.load("preprocessor.pkl")
 
 
@@ -41,13 +43,13 @@ def predict():
     current_year = now.year
     current_month = now.month
 
-    # Pengecekan masa depan untuk data citra
+    # Gunakan imagery tahun sebelumnya jika future
     imagery_year = year
     if year > current_year:
         imagery_year = current_year
     imagery_year -= 1
 
-    # Ambil data citra
+    # Ambil citra
     image_url = f"http://gee.up.railway.app/api/imagery/{imagery_year}?longitude={lon}&latitude={lat}"
     image_response = requests.get(image_url).json()
 
@@ -56,7 +58,7 @@ def predict():
 
     image_download_url = image_response["imagery"]["download_url"]
 
-    # Ambil data tabular dari API
+    # Ambil data tabular
     tabular_url = f"http://gee.up.railway.app/api/data/{year}/{month}?longitude={lon}&latitude={lat}"
     tabular_response = requests.get(tabular_url).json()
 
@@ -65,19 +67,19 @@ def predict():
 
     tabular_data = tabular_response["data"][0]
 
-    # Jika input tahun/bulan di masa depan, ganti untuk data rainfall & soil moisture
+    # Data fallback jika masa depan
     fallback_year = current_year - 1
     if year > current_year or (year == current_year and month > current_month):
         fallback_url = f"http://gee.up.railway.app/api/data/{fallback_year}/{month}?longitude={lon}&latitude={lat}"
         fallback_response = requests.get(fallback_url).json()
         if fallback_response["success"] and len(fallback_response["data"]) > 0:
             fallback_data = fallback_response["data"][0]
-            # Ganti hanya kolom yang relevan
             for col in ["avg_rainfall", "max_rainfall", "soil_moisture"]:
                 tabular_data[col] = fallback_data.get(col, 0.0)
 
-    # Konversi ke DataFrame
+    # Konversi tabular ke dataframe
     tabular_df = pd.DataFrame([tabular_data])
+    tabular_df.drop(columns=['NAME_2', 'long', 'lat'], inplace=True)
 
     # Preprocessing tabular
     try:
@@ -91,9 +93,17 @@ def predict():
     except Exception as e:
         return jsonify({"error": f"Gagal load citra: {str(e)}"}), 500
 
-    # Prediksi
+    # Prediksi menggunakan signature
     try:
-        prediction = model.predict([image_array, X_tabular])
+        # Ganti "input_1" dan "input_2" sesuai input signature model Anda
+        inputs = {
+            "image_input": tf.convert_to_tensor(image_array, dtype=tf.float32),
+            "tabular_input": tf.convert_to_tensor(X_tabular, dtype=tf.float32)
+        }
+
+
+        output = infer(**inputs)
+        prediction = list(output.values())[0].numpy()
         result = int(np.round(prediction[0][0]))
     except Exception as e:
         return jsonify({"error": f"Prediksi gagal: {str(e)}"}), 500
