@@ -10,8 +10,6 @@ from io import BytesIO
 from scipy.stats.mstats import winsorize
 
 def preprocess_tabular_data(df_tabular, preprocessor):
-
-    df_tabular.drop(columns=['NAME_2', 'long', 'lat'], inplace=True)
     
     # Winsorize outliers
     outlier_columns = ['avg_rainfall', 'max_rainfall', 'avg_temperature',
