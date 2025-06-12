@@ -7,10 +7,7 @@ import joblib
 import tifffile as tiff
 import io
 from datetime import datetime
-
-import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 from utils import preprocess_tabular_data, load_image_as_array  # Pastikan ini tersedia
