@@ -58,8 +58,15 @@ def predict():
 
     image_download_url = image_response["imagery"]["download_url"]
 
+    # Kurangi bulan untuk API GEE
+    api_month = month - 1
+    api_year = year
+    if api_month <= 0:
+        api_month = 12
+        api_year -= 1
+
     # Ambil data tabular
-    tabular_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{year}/{month}?longitude={lon}&latitude={lat}"
+    tabular_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{api_year}/{api_month}?longitude={lon}&latitude={lat}"
     tabular_response = requests.get(tabular_url).json()
 
     if not tabular_response["success"] or len(tabular_response["data"]) == 0:
@@ -70,7 +77,14 @@ def predict():
     # Data fallback jika masa depan
     fallback_year = current_year - 1
     if year > current_year or (year == current_year and month > current_month):
-        fallback_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{fallback_year}/{month}?longitude={lon}&latitude={lat}"
+        # Fallback juga dikurangi sebulan
+        fallback_month = month - 1
+        fallback_year_adjusted = fallback_year
+        if fallback_month <= 0:
+            fallback_month = 12
+            fallback_year_adjusted -= 1
+            
+        fallback_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{fallback_year_adjusted}/{fallback_month}?longitude={lon}&latitude={lat}"
         fallback_response = requests.get(fallback_url).json()
         if fallback_response["success"] and len(fallback_response["data"]) > 0:
             fallback_data = fallback_response["data"][0]
