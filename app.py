@@ -50,7 +50,7 @@ def predict():
     imagery_year -= 1
 
     # Ambil citra
-    image_url = f"http://gee.up.railway.app/api/imagery/{imagery_year}?longitude={lon}&latitude={lat}"
+    image_url = f"http://suciihtisabi-datafloodsight.hf.space/api/imagery/{imagery_year}?longitude={lon}&latitude={lat}"
     image_response = requests.get(image_url).json()
 
     if not image_response["success"]:
@@ -59,7 +59,7 @@ def predict():
     image_download_url = image_response["imagery"]["download_url"]
 
     # Ambil data tabular
-    tabular_url = f"http://gee.up.railway.app/api/data/{year}/{month}?longitude={lon}&latitude={lat}"
+    tabular_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{year}/{month}?longitude={lon}&latitude={lat}"
     tabular_response = requests.get(tabular_url).json()
 
     if not tabular_response["success"] or len(tabular_response["data"]) == 0:
@@ -70,7 +70,7 @@ def predict():
     # Data fallback jika masa depan
     fallback_year = current_year - 1
     if year > current_year or (year == current_year and month > current_month):
-        fallback_url = f"http://gee.up.railway.app/api/data/{fallback_year}/{month}?longitude={lon}&latitude={lat}"
+        fallback_url = f"http://suciihtisabi-datafloodsight.hf.space/api/data/{fallback_year}/{month}?longitude={lon}&latitude={lat}"
         fallback_response = requests.get(fallback_url).json()
         if fallback_response["success"] and len(fallback_response["data"]) > 0:
             fallback_data = fallback_response["data"][0]
